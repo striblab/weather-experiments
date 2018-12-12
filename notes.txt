@@ -1,0 +1,82 @@
+100 years of winter
+
+Stacker thing. Big, dramatic map at top (prob of total upper midwest), with animation of the current winter. Animated GIFs of other winters at bottom. Last year (people said it was worse than usual; was it?). Measurements of length of winter (first/last snowfall). Total accumulation. Lowest temperatures. The things below could be: The coldest; the warmest; the most snow. Etc. Then at bottom: pick a year
+
+- Can we somehow show all of: temperature, snowfall patterns and total snowfall accumulation
+- Automate system for keeping said thing up to date
+
+This? https://gis.ncdc.noaa.gov/maps/ncei/summaries/monthly
+This? https://www.ncdc.noaa.gov/snow-and-ice/daily-snow/MN/snowfall/20181123
+
+Options:
+- 10 years of winter, using the snowfall accumulation models (seems weird and arbitrary)
+- Get something ready for a big winter storm, using hourly accumulation data
+- 100 years Minnesota winters: GHCN data interpolated to a mile-by-mile grid. Winter in your birth year?
+  - Apparently there's a GHCN gridded dataset called "HadGHCND"? ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/readme.txt or google GHCN grid
+
+
+Todos:
+- Map one set of observations. Stylize a bit.
+  - Crank out an SVG using data from two historic decades: 1918, 1968
+  - Play around with images. See if we can get it to look good. Try time series, etc.
+  - Use this to see whether the voronoi approach can work. Else, back to researching grid.
+
+
+- Wind grid? http://www.nco.ncep.noaa.gov/pmb/products/gfs/
+- Before/after satellite maps: https://www.nytimes.com/interactive/2016/01/22/us/east-coast-snow-storm.html
+- Earth thing: https://earth.nullschool.net/about.html
+- Snowpiles: http://viewshed.matinic.us/2018/01/13/1139/
+  - A decade of Minnesota of snowfall, visualized
+  - 10 years of winter, visualized
+  - This idea looks like the winner
+- Animated satellite maps
+  - https://www.nytimes.com/interactive/2015/10/23/world/americas/hurricane-patricia.html
+
+- https://www.weather5280.com/blog/2015/01/26/6-tools-to-visualize-the-northeast-blizzard-that-didnt-exist-last-time-around/
+
+https://medium.com/planet-stories/a-gentle-introduction-to-gdal-part-1-a3253eb96082
+
+https://thomasthoren.com/2016/02/28/making-a-new-york-times-map.html
+https://gis.stackexchange.com/questions/144535/creating-transparent-hillshade/144700#144700
+https://gis.stackexchange.com/questions/12833/smoothing-dem-using-grass
+http://strimas.com/r/snowfall/
+https://github.com/clhenrick/gdal_hillshade_tutorial
+https://www.washingtonpost.com/graphics/2018/national/snow-accumulation/?utm_term=.44bd1ab2d3fd
+https://tilemill-project.github.io/tilemill/docs/guides/terrain-data/
+
+- Snowpiles: http://viewshed.matinic.us/2018/01/13/1139/
+  - A decade of Minnesota of snowfall, visualized
+  - 10 years of winter, visualized
+  - This idea looks like the winner
+
+At top: This year so far. Then the last 10. Could also rank them. 10 years of winter, ranked. A total accumulation thing over that time?
+
+
+Todo:
+- Try adding slope shade
+- Slightly more granular coloring
+- Figure out how to make sensical values (key)
+- Try clipping to Upper Midwest (including Michigan)
+- Add cities, boundaries, other vectors
+- Make into movie or something more performant
+  - Add dates, etc.
+
+https://weather.cod.edu/satrad/exper/?parms=regional-northcentral-02-48-0-100-1&checked=map&colorbar=undefined
+
+https://medium.com/planet-stories/a-gentle-introduction-to-gdal-part-4-working-with-satellite-data-d3835b5e2971
+
+GOES data: http://edc.occ-data.org/goes16/getdata/
+
+Way to fix snow map thing:
+- Create a color relief map first, with sensical values
+- Then do Hillshade
+- Then merge them: http://dirkraffel.com/2011/07/05/best-way-to-merge-color-relief-with-shaded-relief-map/
+- Or this: https://web.archive.org/web/20120120182050/http://linfiniti.com/2010/12/a-workflow-for-creating-beautiful-relief-shaded-dems-using-gdal/
+- https://medium.com/devseed/creating-hillshades-and-color-relief-maps-based-on-srtm-data-for-afghanistan-and-pakistan-ae7c8e85d936
+
+
+Whoa way better. Command sequence
+
+gdaldem color-relief projected.tif color-ramp-raw.txt shadedrelief.tiff
+convert -gamma .5 hillshade.tif hillshade_gamma.tif
+convert shadedrelief.tif hillshade_gamma.tif -compose Overlay -composite output2.tif
