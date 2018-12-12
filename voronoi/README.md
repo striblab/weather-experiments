@@ -1,4 +1,4 @@
-## Weather station Voronoi
+# Weather station Voronoi
 
 Uses [turf](http://turfjs.org) and other tools to create a [Voronoi map](https://en.wikipedia.org/wiki/Voronoi_diagram) of official and volunteer weather stations in Minnesota.
 
