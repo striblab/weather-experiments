@@ -1,4 +1,4 @@
-## Using turf to make hexgrids
+# Using turf to make hexgrids
 
 Simple set of scripts to programmatically create [hex grids](http://turfjs.org/docs#hexGrid) across geometries, which could be used as bins for visualizing various weather things. You could also use this to create [other type of grids](http://turfjs.org/docs#squareGrid).
 
