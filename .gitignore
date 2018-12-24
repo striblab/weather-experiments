@@ -1,2 +1,6 @@
 *.DS_Store
+*.icloud
 hillshading/raw
+satellite/data
+satellite/final
+satellite/tmp

@@ -1,16 +1,12 @@
 # Animated satellite maps
 
-Super rough animated maps of cloud cover using [GOES satellite images](http://occ-data.org/GOES-16/).
+This example maps several days cloud movement during the blizzard of April 13-15, 2018, using [GOES-16 satellite imagery](http://occ-data.org/GOES-16/).
 
 Could be used to generate animations of interesting storms or weather patterns. Satellite data is most easily downloaded [here](http://home.chpc.utah.edu/~u0553130/Brian_Blaylock/cgi-bin/goes16_download.cgi).
 
-rclone copy publicAWS:noaa-goes16/ABI-L2-MCMIPC/2018/351/16/
-
 ## Usage
 
-For now, only `bw.sh` works. It generates a very short, rough, animated GIF representing two hours of cloud cover across the Midwest — in black and white. Eventually `color.sh` will also work and will provide a true-color representation of the same thing.
-
-Downloading data is easiest with [rclone](https://github.com/blaylockbk/pyBKB_v3/blob/master/rclone_howto.md). Sample after the config is working: `rclone copy publicAWS:noaa-goes16/ABI-L2-MCMIPC/2018/351/19/ ./`.
+First run `get_data.sh` to download a bunch of satellite images using `rclone`. This will take a while, and you'll need to set things up using [these instructions](https://github.com/blaylockbk/pyBKB_v3/blob/master/rclone_howto.md) if it's your first time. Once the data is downloaded, `color.sh` will stitch a bunch of images into a rough movie of the storm. It could use some adjustments in terms of contrast, gamma, etc., but the results should be reasonably clean for a first pass.
 
 ## Dependencies
 
@@ -18,25 +14,24 @@ Ooooooh boy. Get ready for it.
 
 The big dependency for working with this stuff is [GDAL](http://edc.occ-data.org/goes16/gdal/). But not just any GDAL. You need GDAL that can also work with NetCDF files, which can only be installed by following [obscure incantations](https://varunpant.com/posts/gdal-2-on-mac-with-homebrew).
 
-You'll also need ffmpeg to make movies (`brew install ffmpeg`) and ghostscript to handle image conversion.
+You'll also need ffmpeg to make movies (`brew install ffmpeg`) and imagemagick to handle image conversion.
 
 ## Notes
 
-Working with satellite images seems to require knowing a bunch of obscure acronyms and factoids about how satellites work. Some random important things to know are:
+Working with satellite images seems to require knowing a bunch of obscure factoids about how satellites work. Some random important things to know are:
 
   * Data is natively represented in raster form using NetCDF files, which are like special GeoTIFFs for scientists. These can easily be converted to normal GeoTIFFs [using GDAL](http://edc.occ-data.org/goes16/gdal/).
-  * The native satellite projection is super weird because images are taken from spaaaaaace. Directions for projecting the images into a more familiar form are [here](http://edc.occ-data.org/goes16/gdal/). Once you project the data into something sensible, you can manipulate it as you would other GIS files.
+  * The native satellite projection is weird because images are taken from spaaaaaace. Directions for projecting the images into a more familiar form are [here](http://edc.occ-data.org/goes16/gdal/). Once you project the data into something sensible, you can manipulate it as you would other GIS files.
   * The data we want is from the CONUS (Continental US) dataset, not the Full Disk dataset, which is huge.
-  * Examples here work with multi-band files (AKA "ABI L2 Cloud and Moisture Imagery: Multi-Band Format"), which encode all of GOES-16's individual bands into a single file. Descriptions of those bands are here, but the most important ones for this are Blue (Band 2), Red (Band 1) and [veggie](https://www.goes-r.gov/education/docs/ABI-bands-FS/ABI%20Fact%20Sheet%20Band%203%20(Veggie)_FINAL.pdf) (Band 3).
-  * Multiple bands can be combined into a single true color band, but making colors look like an actual planet a human would recognize takes further sorcery. For now, that's going to stay on the to-do list.
+  * Examples here work with multi-band files (AKA "ABI L2 Cloud and Moisture Imagery: Multi-Band Format"), which encode all of GOES-16's individual bands into a single file. Descriptions of those bands are here, but the most important ones for this are Blue (Band 2), Red (Band 1) and veggie (Band 3) — which can be converted into a faux green band for the purposes of creating true-color imagery (see instructions in `plot_conus.py`).
 
 ## Todo
 
-This is the barest possible representation of animated satellite data, so future work will be focused on making it not look like garbage. This includes:
+These examples are the barest possible representations of animated satellite data, so future work should be focused on making it look sharper. This includes:
 
-  * Creating a true full-color representation
-  * Making gamma adjustments and otherwise sharpening the result
-  * Potentially trying to use higher resolution imagery so the zoomed-in version doesn't look so blocky
+  * Making gamma and contrast adjustments and otherwise sharpening the results
+  * Potentially trying to use higher resolution imagery so the zoomed-in version doesn't look so blocky. (Test :Rad files and see if this helps)
+  * Labels?
 
 ## Resources
 

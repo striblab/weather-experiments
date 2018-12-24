@@ -1,0 +1,58 @@
+rm -rf tmp && \
+rm -rf final && \
+
+mkdir -p tmp && \
+mkdir -p final && \
+cd data &&
+
+declare -a arr=("OR_ABI-L2-MCMIPC-M3_G16_s20181041227226_e20181041229599_c20181041230105.nc" "OR_ABI-L2-MCMIPC-M3_G16_s20181041652227_e20181041655000_c20181041655114.nc" "OR_ABI-L2-MCMIPC-M3_G16_s20181042142228_e20181042145001_c20181042145106.nc", "OR_ABI-L2-MCMIPC-M3_G16_s20181050107229_e20181050110002_c20181050110121.nc")
+
+
+x=0
+for i in ${arr[@]}; do
+
+  echo $i
+  
+  # Pull out R, B and veggie layers
+  gdal_translate -ot float32 -unscale -CO COMPRESS=deflate NETCDF:"$i":CMI_C01 ../tmp/c01.tmp.tif
+  gdal_translate -ot float32 -unscale -CO COMPRESS=deflate NETCDF:"$i":CMI_C02 ../tmp/c02.tmp.tif
+  gdal_translate -ot float32 -unscale -CO COMPRESS=deflate NETCDF:"$i":CMI_C03 ../tmp/c03.tmp.tif
+
+  # Merge layers to create a faux green band. Order matters here (2, 1 then 3 — R, veggie, B)
+  gdal_merge.py -o ../tmp/green.tmp.tif -separate ../tmp/c02.tmp.tif ../tmp/c03.tmp.tif ../tmp/c01.tmp.tif -co COMPRESS=DEFLATE -co PHOTOMETRIC=RGB 
+
+  # Apply color correction to make it an actual green band, per the calculation here:
+  # http://edc.occ-data.org/goes16/python/
+  # More info here: https://www.star.nesdis.noaa.gov/GOES/documents/ABIQuickGuide_CIMSSRGB_v2.pdf
+  gdal_calc.py -R ../tmp/green.tmp.tif --R_band=1 -G ../tmp/green.tmp.tif --G_band=2 -B ../tmp/green.tmp.tif --B_band=3 --outfile=../tmp/green2.tmp.tif --calc="R*0.48358168+G*0.06038137+B*0.45706946"
+
+  # Merge green with the other bands to make a true color RGB
+  gdal_merge.py -o ../tmp/truecolor.tmp.tif -separate ../tmp/c02.tmp.tif ../tmp/green2.tmp.tif ../tmp/c01.tmp.tif -co PHOTOMETRIC=RGB -co COMPRESS=DEFLATE
+
+  # Assign coordinate georeference
+  gdalwarp -t_srs EPSG:4326 -dstnodata -999.0 ../tmp/truecolor.tmp.tif ../tmp/truecolor.geo.tmp.tif
+
+  # Apply some color correction
+  convert -normalize -depth 8 -channel R -gamma 1.3 -channel B -gamma 0.91 -channel G -gamma 1.2 -modulate 120,160 ../tmp/truecolor.geo.tmp.tif ../tmp/truecolor.corrected.tmp.tif
+  ../gdalcopyproj.py ../tmp/truecolor.geo.tmp.tif ../tmp/truecolor.corrected.tmp.tif
+  
+  # Clip to Midwest
+  gdalwarp -q -te -110.5852335794 36.6468069451 -79.37479199 50.7089671985 -ts 0 900 -dstalpha -r bilinear ../tmp/truecolor.corrected.tmp.tif ../tmp/truecolor.clipped.tmp.tif
+  
+  # Burn boundary lines
+  gdal_rasterize -b 1 -b 2 -b 3 -burn 0 -burn 0 -burn 0 -l midwest-base-wgs84-lines ../vector/midwest/midwest-base-wgs84-lines.shp ../tmp/truecolor.clipped.tmp.tif
+
+  # Convert to png
+  sips -s format png ../tmp/truecolor.clipped.tmp.tif --out ../tmp/truecolor.clipped.tmp.png
+
+  # Move to final folder
+  mv ../tmp/truecolor.clipped.tmp.png ../final/color.$x.png
+  rm ../tmp/*
+
+  x=$((x+1))
+done
+
+# Convert to mp4
+cd ../final && \
+ffmpeg -r 60 -f image2 -s 999x450 -i color.%d.png -vcodec libx264 -crf 25 -pix_fmt yuv420p output.color.mp4
+rm ./*.png
